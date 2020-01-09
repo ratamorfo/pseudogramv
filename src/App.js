@@ -9,7 +9,7 @@ class App extends Component {
 
     this.state = {
       user: null,
-      pictures: []
+      pictures: [],
     }
 
     this.handleAuth = this.handleAuth.bind(this);
@@ -25,7 +25,7 @@ class App extends Component {
       });
     });
 
-    firebase.database().ref('pictures').on('child_added', snapshot => {
+    firebase.database().ref('usuarios').on('child_added', snapshot => {
       this.setState({
         pictures: this.state.pictures.concat(snapshot.val())
       });
@@ -51,9 +51,10 @@ class App extends Component {
     const file = event.target.files[0];
     const storageRef = firebase.storage().ref(`/fotos/${file.name}`);
     const task = storageRef.put(file);
-    
+  
     task.on("state_changed", snapshot => {
-        let percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        var percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log("Upload " + percentage + " % done");
         this.setState({
             uploadValue: percentage
         })
@@ -63,13 +64,15 @@ class App extends Component {
         const record = {
           photoURL: this.state.user.photoURL,
           displayName: this.state.user.displayName,
-          image: task.snapshot.downloadURL
+          image: null
         };
-
-        const dbRef = firebase.database().ref('pictures');
+        const dbRef = firebase.database().ref('usuarios');
         const newPicture = dbRef.push();
-        newPicture.set(record);
 
+        task.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+          record.image = downloadURL;
+          newPicture.set(record);
+        });
     });
 }
 
@@ -83,10 +86,15 @@ class App extends Component {
           <FileUpload onUpload={this.handleUpload} />
 
           {
-            this.state.pictures.map(picture => (
-              <div>
-                  <img src={picture.image} alt=""/>
-                  <br/>
+              /*items && items.map((item, key) => 
+                <li key={key}><Link to={item.url}>{item.title}</Link></li>)*/
+            }
+
+          {
+            this.state.pictures.map((picture, key) => (
+              <div key={key}>
+                  <img src={picture.image} alt="Logo"/>
+                  <br />
                   <img src={picture.photoURL} alt={picture.displayName}/>
                   <br/>
                   <span>{picture.displayName}</span>
