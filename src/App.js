@@ -60,7 +60,7 @@ class App extends Component {
         })
     }, error => {
         console.log(error.message);
-    }, () => {
+    }, async () => {
         const record = {
           photoURL: this.state.user.photoURL,
           displayName: this.state.user.displayName,
@@ -69,10 +69,19 @@ class App extends Component {
         const dbRef = firebase.database().ref('usuarios');
         const newPicture = dbRef.push();
 
-        task.snapshot.ref.getDownloadURL().then(function(downloadURL) {
+        /*task.snapshot.ref.getDownloadURL().then(async downloadURL => {
+          record.image = downloadURL;
+          console.log(downloadURL);
+          newPicture.set(record);
+        });*/
+
+        try {
+          const downloadURL = await task.snapshot.ref.getDownloadURL();
           record.image = downloadURL;
           newPicture.set(record);
-        });
+        } catch (error) {
+          console.log(error.message)
+        }
     });
 }
 
@@ -95,7 +104,7 @@ class App extends Component {
               <div key={key}>
                   <img src={picture.image} alt="Logo"/>
                   <br />
-                  <img src={picture.photoURL} alt={picture.displayName}/>
+                  <img width="50px" src={picture.photoURL} alt={picture.displayName}/>
                   <br/>
                   <span>{picture.displayName}</span>
               </div>
