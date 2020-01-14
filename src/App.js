@@ -25,12 +25,24 @@ class App extends Component {
       });
     });
 
-    firebase.database().ref('usuarios').on('child_added', snapshot => {
-      this.setState({
-        pictures: this.state.pictures.concat(snapshot.val())
-      });
-    });
+          /*firebase.database().ref('usuarios').on('child_added', snapshot => {
+            this.setState({
+              pictures: this.state.pictures.concat(snapshot.val())
+            });
+          });*/
 
+    firebase.firestore().collection('usuarios').onSnapshot(snapshot => {
+      var lastChange = [];
+      snapshot.forEach(doc => {
+        lastChange.push(doc.data());
+      });
+
+      this.setState({
+        pictures: lastChange
+      });
+
+    });
+          
   }
 
   handleAuth() {
@@ -66,19 +78,23 @@ class App extends Component {
           displayName: this.state.user.displayName,
           image: null
         };
-        const dbRef = firebase.database().ref('usuarios');
-        const newPicture = dbRef.push();
+              /*const dbRef = firebase.database().ref('usuarios');
+              const newPicture = dbRef.push();*/
 
-        /*task.snapshot.ref.getDownloadURL().then(async downloadURL => {
-          record.image = downloadURL;
-          console.log(downloadURL);
-          newPicture.set(record);
-        });*/
+              /*task.snapshot.ref.getDownloadURL().then(async downloadURL => {
+                record.image = downloadURL;
+                console.log(downloadURL);
+                newPicture.set(record);
+              });*/
+
+        //const db = firebase.firestore();
+        const userRef = firebase.firestore().collection('usuarios');
 
         try {
           const downloadURL = await task.snapshot.ref.getDownloadURL();
           record.image = downloadURL;
-          newPicture.set(record);
+          //newPicture.set(record);
+          userRef.add(record);
         } catch (error) {
           console.log(error.message)
         }
@@ -93,12 +109,6 @@ class App extends Component {
           <div className="name">Hola {this.state.user.displayName}!</div>
           <button onClick={this.handleLogout}>Cerrar Sesión</button>
           <FileUpload onUpload={this.handleUpload} />
-
-          {
-              /*items && items.map((item, key) => 
-                <li key={key}><Link to={item.url}>{item.title}</Link></li>)*/
-            }
-
           {
             this.state.pictures.map((picture, key) => (
               <div key={key}>
@@ -108,7 +118,7 @@ class App extends Component {
                   <br/>
                   <span>{picture.displayName}</span>
               </div>
-            )).reverse()
+            ))
 
           }
         </div>
